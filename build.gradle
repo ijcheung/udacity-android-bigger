@@ -17,3 +17,22 @@ allprojects {
         jcenter()
     }
 }
+
+//http://stackoverflow.com/questions/32513062/what-is-the-proper-way-to-run-tasks-in-succession-in-gradle
+//https://docs.gradle.org/current/userguide/multi_project_builds.html
+//https://discussions.udacity.com/t/last-optional-step-how-to-start-an-external-module-task-from-the-root-build-gradle/24211/8
+evaluationDependsOn ':app'
+evaluationDependsOn ':backend'
+
+project(':backend'){
+    appengine{
+        daemon true
+    }
+}
+
+task startBackendAndTest(){
+    dependsOn ':backend:appengineRun', ':app:connectedCheck'
+    finalizedBy ':backend:appengineStop'
+
+    tasks.getByPath(':app:connectedCheck').mustRunAfter ':backend:appengineRun'
+}

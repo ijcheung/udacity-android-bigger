@@ -1,7 +1,5 @@
 package com.udacity.gradle.builditbigger;
 
-import android.content.Context;
-import android.content.Intent;
 import android.os.AsyncTask;
 
 import com.google.api.client.extensions.android.http.AndroidHttp;
@@ -9,16 +7,19 @@ import com.google.api.client.extensions.android.json.AndroidJsonFactory;
 import com.google.api.client.googleapis.services.AbstractGoogleClientRequest;
 import com.google.api.client.googleapis.services.GoogleClientRequestInitializer;
 import com.udacity.gradle.backend.myApi.MyApi;
-import com.udacity.gradle.jokedisplay.DisplayJokeActivity;
 
 import java.io.IOException;
 
-class EndpointsAsyncTask extends AsyncTask<Context, Void, String> {
+class RetrieveJokeAsyncTask extends AsyncTask<Void, Void, String> {
     private static MyApi myApiService = null;
-    private Context context;
+    private OnJokeRetrievedListener mCallback;
+
+    public RetrieveJokeAsyncTask(OnJokeRetrievedListener listener){
+        mCallback = listener;
+    }
 
     @Override
-    protected String doInBackground(Context... params) {
+    protected String doInBackground(Void... params) {
         if(myApiService == null) {  // Only do this once
             MyApi.Builder builder = new MyApi.Builder(AndroidHttp.newCompatibleTransport(),
                     new AndroidJsonFactory(), null)
@@ -34,8 +35,6 @@ class EndpointsAsyncTask extends AsyncTask<Context, Void, String> {
             myApiService = builder.build();
         }
 
-        context = params[0];
-
         try {
             return myApiService.getJoke().execute().getData();
         } catch (IOException e) {
@@ -47,9 +46,10 @@ class EndpointsAsyncTask extends AsyncTask<Context, Void, String> {
     protected void onPostExecute(String joke) {
         super.onPostExecute(joke);
 
-        Intent intent = new Intent(context, DisplayJokeActivity.class);
-        intent.putExtra(DisplayJokeActivity.JOKE, joke);
+        mCallback.onJokeRetrieved(joke);
+    }
 
-        context.startActivity(intent);
+    interface OnJokeRetrievedListener {
+        void onJokeRetrieved(String joke);
     }
 }
